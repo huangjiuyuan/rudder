@@ -1,25 +1,22 @@
----
-# exposing tiller as a service
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: helm
-    name: tiller
-  name: tiller
-  namespace: kube-system
+    app: rudder
+    type: api
+  name: rudder
 spec:
   ports:
   - name: api
-    port: 44134
     protocol: TCP
-    targetPort: 44134
+    port: 5000
+    targetPort: 5000
+    nodePort: 30500
+  type: NodePort
   selector:
-    app: helm
-    name: tiller
-
+    app: rudder
+    type: api
 ---
-# add repo file as config map
 apiVersion: v1
 data:
   repo: |
@@ -32,7 +29,6 @@ kind: ConfigMap
 metadata:
   name: ruddercfg
   namespace: default
-
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -60,7 +56,7 @@ spec:
           image: quay.io/acaleph/rudder:v0.1.3
           env:
           - name: RUDDER_TILLER_ADDRESS
-            value: tiller.kube-system:44134
+            value: tiller-deploy.kube-system:44134
           # - name: RUDDER_BASIC_AUTH_USERNAME
           #   valueFrom:
           #     secretKeyRef:
@@ -73,8 +69,6 @@ spec:
           #       name: rudder-creds
           - name: RUDDER_HELM_REPO_FILE
             value: /opt/rudder/helm/repo.yaml
-
-
           ports:
           - containerPort: 5000
             name: api
